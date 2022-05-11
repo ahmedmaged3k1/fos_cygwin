@@ -1,0 +1,76 @@
+void allocateMem(struct Env* e, uint32 virtual_address, uint32 size)
+{
+	//This function should allocate ALL pages of the required range in the PAGE FILE
+	//and allocate NOTHING in the main memory
+
+	size = ROUNDUP(size,PAGE_SIZE);
+	size = size/PAGE_SIZE;
+
+	while(size>0)
+	{
+		int pageFile = pf_add_empty_env_page(curenv,virtual_address,1);
+		if(pageFile == E_NO_PAGE_FILE_SPACE)
+			panic("ERROR in allocateMem, no enough memory.");
+		else
+		{
+			virtual_address += PAGE_SIZE;
+			if(virtual_address == USER_HEAP_MAX)
+				virtual_address = USER_HEAP_START;
+		}
+		size--;
+	}
+}
+
+
+
+// [12] freeMem
+
+void freeMem(struct Env* e, uint32 virtual_address, uint32 size)
+{
+	size = ROUNDUP(size,PAGE_SIZE);
+	size = size / PAGE_SIZE;
+	//This function should:
+	while (size > 0)
+	{
+		//1. Free ALL pages of the given range from the Page File
+		pf_remove_env_page(e,virtual_address);
+		//2. Free ONLY pages that are resident in the working set from the memory
+		for(int i = 0 ; i <e->page_WS_max_size ;i++)
+		{
+			if(e->ptr_pageWorkingSet[i].virtual_address == virtual_address)
+			{
+				env_page_ws_clear_entry(e,i);
+			}
+		}
+		//3. Removes ONLY the empty page tables (i.e. not used) (no pages are mapped in the table)
+		unmap_frame(e->env_page_directory,(void*)virtual_address);
+		uint32* ptr_page_table;
+		get_page_table(e->env_page_directory,(uint32*)virtual_address,&ptr_page_table);
+		if(ptr_page_table!=NULL)
+		{
+			bool empty=1;
+			for(int j = 0 ; j < 1024 ; j++)
+			{
+				if(ptr_page_table[j]!=0)
+					empty=0;
+			}
+			if (empty==1)
+			{
+				/*uint32 physicalAdd = e->env_page_directory[PDX(virtual_address)]>>12<<12;
+				e->env_page_directory[PDX(virtual_address)] = 0;
+				struct Frame_Info *Frame = to_frame_info(physicalAdd);
+				free_frame(Frame);*/
+				//remember that the page table was created using kmalloc so it should be removed using kfree()
+				kfree((void*)virtual_address);
+			}
+		}
+
+		virtual_address+=PAGE_SIZE;
+		if(virtual_address == USER_HEAP_MAX)
+			virtual_address = USER_HEAP_START;
+		size--;
+	}
+
+
+
+}
