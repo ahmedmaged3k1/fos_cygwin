@@ -18,56 +18,55 @@
 //==================================================================================//
 
 uint32 pages=(USER_HEAP_MAX-USER_HEAP_START ) /PAGE_SIZE;
-bool inUse [(USER_HEAP_MAX-USER_HEAP_START ) /PAGE_SIZE];
-
-static int numberOfBlocks[(USER_HEAP_MAX-USER_HEAP_START ) /PAGE_SIZE];
+bool Occupied [(USER_HEAP_MAX-USER_HEAP_START ) /PAGE_SIZE];
 
 struct allocations{
 	uint32 startAddress;
-	uint32 startIndex;
-	uint32 noOfBlocks;
+	int startIndex;
+	int noOfBlocks;
 };
-struct allocations allocations1[(USER_HEAP_MAX - USER_HEAP_START +1 ) / PAGE_SIZE];
+struct allocations savedAllocations[(USER_HEAP_MAX - USER_HEAP_START +1 ) / PAGE_SIZE];
 uint32 allocationsCounter=0;
 
+
+
+int nextIndex = 0;
+uint32 nextAddress = USER_HEAP_START;
 uint32 nextFit (uint32 size){
 
 	uint32 currentBlocks=0;
 	uint32 checkedPages=0;
-	static uint32 i = 0;
-	uint32 startIndex;
-	static uint32 currentAddress = USER_HEAP_START;
-	uint32 startAddress ;
+	uint32 currentAddress = nextAddress;
 	bool started=0;
-
-	while(checkedPages<pages)
+	uint32 startAddress;
+	uint32 startIndex;
+	for(;checkedPages<pages;checkedPages++)
 	{
-		if (inUse[i]==0)
+		if (Occupied[nextIndex]==0)
 		{
 			if(started==0)
 			{
 				startAddress=currentAddress;
-				startIndex=i;
+				startIndex=nextIndex;
 				started=1;
 			}
 			currentBlocks++;
 			if(currentBlocks>=size)
 			{
-				//numberOfBlocks[startIndex]= currentBlocks;
-				allocations1[allocationsCounter].startAddress=startAddress;
-				allocations1[allocationsCounter].startIndex=startIndex;
-				allocations1[allocationsCounter].noOfBlocks=currentBlocks;
-				while (currentBlocks>0)
+				savedAllocations[allocationsCounter].startAddress=startAddress;
+				savedAllocations[allocationsCounter].startIndex=startIndex;
+				savedAllocations[allocationsCounter].noOfBlocks=currentBlocks;
+				for(;currentBlocks>0;currentBlocks--)
 				{
-					inUse[startIndex]=1;
+					Occupied[startIndex]=1;
 					startIndex = (startIndex+1)%pages;
-					currentBlocks--;
 				}
 				allocationsCounter++;
 				currentAddress+=PAGE_SIZE;
 				if(currentAddress==USER_HEAP_MAX)
 					currentAddress=USER_HEAP_START;
-				i = (i+1) % pages;
+				nextAddress=currentAddress;
+				nextIndex = (nextIndex+1) % pages;
 				return startAddress;
 			}
 		}
@@ -76,13 +75,10 @@ uint32 nextFit (uint32 size){
 			currentBlocks=0;
 			started=0;
 		}
-
-		checkedPages++;
-		i = (i+1) % pages;
+		nextIndex = (nextIndex+1) % pages;
 		currentAddress+=PAGE_SIZE;
 		if(currentAddress==USER_HEAP_MAX)
 			currentAddress=USER_HEAP_START;
-
 	}
 	return 0;
 }
@@ -108,6 +104,7 @@ void* malloc(uint32 size)
 	//Use sys_isUHeapPlacementStrategyNEXTFIT() and
 	//sys_isUHeapPlacementStrategyBESTFIT() for the bonus
 	//to check the current strategy
+
 	size = ROUNDUP(size,PAGE_SIZE);
 	size = size / PAGE_SIZE;
 
@@ -151,36 +148,32 @@ void* sget(int32 ownerEnvID, char *sharedVarName)
 
 void free(void* virtual_address)
 {
-	//TODO: [PROJECT 2022 - [11] User Heap free()] [User Side]
-	// Write your code here, remove the panic and write your code
 	int startIndex ;
 	int size;
-	int i = 0 ;
-	for(; i < allocationsCounter; i++)
-	{
-		if(allocations1[i].startAddress==(uint32)virtual_address)
-		{
-			startIndex=allocations1[i].startIndex;
-			size=allocations1[i].noOfBlocks;
-		}
+	int allocationIndex ;
+	bool found=0;
 
-	}
-	//int size = numberOfBlocks[startIndex];
+	for(allocationIndex=0 ; allocationIndex < allocationsCounter; allocationIndex++)
+		if(savedAllocations[allocationIndex].startAddress==(uint32)virtual_address)
+		{
+			startIndex=savedAllocations[allocationIndex].startIndex;
+			size=savedAllocations[allocationIndex].noOfBlocks;
+			found = 1;
+			break;
+		}
+	if (found == 0)
+		return;
+	//cprintf("size before :%d\n",size);
 	sys_freeMem((uint32)virtual_address,size*PAGE_SIZE);
-	//numberOfBlocks[startIndex]=0;
-	while(size>0)
+	//cprintf("size after :%d\n",size);
+	for(;size>0;size--)
 	{
-		inUse[startIndex]=0;
+		Occupied[startIndex]=0;
 		startIndex = (startIndex+1) % pages;
-		size--;
 	}
-	allocations1[i].startAddress=0;
-	allocations1[i].startIndex=0;
-	allocations1[i].noOfBlocks=0;
-	//allocationsCounter--;
-	//you shold get the size of the given allocation using its address
-	//you need to call sys_freeMem()
-	//refer to the project presentation and documentation for details
+	savedAllocations[allocationIndex].startAddress=0;
+	savedAllocations[allocationIndex].startIndex=0;
+	savedAllocations[allocationIndex].noOfBlocks=0;
 	return;
 }
 

@@ -88,7 +88,6 @@ struct Env* find_env_in_queue(struct Env_Queue* queue, uint32 envID)
 //============================= REQUIRED FUNCTIONS =================================//
 //==================================================================================//
 
-uint8 QuantumArr[100];
 void sched_init_MLFQ(uint8 numOfLevels, uint8 *quantumOfEachLevel)
 {
 	//=========================================
@@ -101,71 +100,47 @@ void sched_init_MLFQ(uint8 numOfLevels, uint8 *quantumOfEachLevel)
 	//[1] Create the ready queues and initialize them using init_queue()
 	 num_of_ready_queues=numOfLevels;
 	 struct Env_Queue *e;
-	 cprintf("Number of levels is %d \n",numOfLevels);
-	 env_ready_queues =kmalloc(numOfLevels);
+	 cprintf("Number of levels is %d \n",num_of_ready_queues);
+	 env_ready_queues =kmalloc(numOfLevels* sizeof(struct Env_Queue));
 	 for(int i=0;i<num_of_ready_queues;i++){
 
 		 init_queue(&env_ready_queues[i]);
-
+		 cprintf("%d \n",env_ready_queues[i]);
 
 		 cprintf("queue is initialized %d\n",i);
 	 }
 	 cprintf("queue is initialized successfully\n");
 
 	//[2] Create the "quantums" array and initialize it by the given quantums in "quantumOfEachLevel[]"
-	   for(int i=0;i<numOfLevels;i++){
-		   QuantumArr[i]=quantumOfEachLevel[i];
-		   cprintf("quantums each is %d \n",QuantumArr[i]);
+	 quantums=kmalloc(numOfLevels* sizeof(uint8));
+	 for(int i=0;i<numOfLevels;i++){
+		 quantums[i]=quantumOfEachLevel[i];
+		   cprintf("quantums each is %d \n",quantums[i]);
 	   }
 	//[3] Set the CPU quantum by the first level one
-	   kclock_set_quantum (QuantumArr[0]);
-	   cprintf("clock hena\n");
+	   kclock_set_quantum (quantums[0]);
+	   cprintf("clock now is %d\n",quantums[0]);
 }
-
-
+int chosenqueue;
+struct Env* next_env;
+bool found=0;
 struct Env* fos_scheduler_MLFQ()
-{   bool found=0;
-	//TODO: [PROJECT 2022 [8] CPU Scheduling MLFQ] MLFQ Scheduler
-	// Write your code here, remove the panic and write your code
-	//Apply the MLFQ with the specified levels to pick up the next environment
-	//Note: the "curenv" (if exist) should be placed in its correct queue
-
-	//Steps:
-	//======
-	//[1] If the current environment (curenv) exists, place it in the suitable queue
-	int level;
+{
 	if (curenv != NULL)
-	{   struct Env* env;
-	    for(int i=0;i<num_of_ready_queues;i++){
-	     env = find_env_in_queue(&env_ready_queues[i], curenv->env_id);
-	      if(env!= NULL){
-	    	 level = i;
-	    	 break;
-	      }
-
-		 }
-	     if(env!= NULL){
-			 enqueue(&env_ready_queues[level+1],env);
-			 remove_from_queue(&env_ready_queues[level],env);
-		 }
-
+	{
+	 enqueue(&(env_ready_queues[chosenqueue+1]), curenv);
 	}
-	//[2] Search for the next env in the queues according to their priorities (first is highest)
-	//[3] If next env is found: Set the CPU quantum by the quantum of the selected level
-	//,remove the selected env from its queue and return it
-
-	//Else, return NULL
 	for(int i=0;i<num_of_ready_queues;i++){
-	  if(queue_size(&env_ready_queues[i])!=0){
-		  found=1;
-		  curenv=envs;
-		  kclock_set_quantum(QuantumArr[i]);
-		  remove_from_queue(&env_ready_queues[i],envs);
-
-	  }
+		next_env=dequeue(&env_ready_queues[i]);
+		if(next_env!=NULL){
+			found=1;
+			kclock_set_quantum(quantums[i]);
+			env_run(next_env);
+			chosenqueue=i;
+	    }
 	}
-  if(found==1){return curenv;}
-  else{return NULL;}
+    if(found==1){return next_env;}
+    else{return NULL;}
 
 }
 

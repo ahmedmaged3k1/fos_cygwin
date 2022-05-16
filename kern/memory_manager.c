@@ -729,7 +729,6 @@ int loadtime_map_frame(uint32 *ptr_page_directory, struct Frame_Info *ptr_frame_
 /// functions used for malloc() and freeHeap()
 //======================================================
 
-// [10] allocateMem
 void allocateMem(struct Env* e, uint32 virtual_address, uint32 size)
 {
 	//This function should allocate ALL pages of the required range in the PAGE FILE
@@ -738,7 +737,7 @@ void allocateMem(struct Env* e, uint32 virtual_address, uint32 size)
 	size = ROUNDUP(size,PAGE_SIZE);
 	size = size/PAGE_SIZE;
 
-	while(size>0)
+	for(;size>0;size--)
 	{
 		int pageFile = pf_add_empty_env_page(curenv,virtual_address,1);
 		if(pageFile == E_NO_PAGE_FILE_SPACE)
@@ -749,7 +748,6 @@ void allocateMem(struct Env* e, uint32 virtual_address, uint32 size)
 			if(virtual_address == USER_HEAP_MAX)
 				virtual_address = USER_HEAP_START;
 		}
-		size--;
 	}
 }
 
@@ -762,7 +760,7 @@ void freeMem(struct Env* e, uint32 virtual_address, uint32 size)
 	size = ROUNDUP(size,PAGE_SIZE);
 	size = size / PAGE_SIZE;
 	//This function should:
-	while (size > 0)
+	for(;size>0;size--)
 	{
 		//1. Free ALL pages of the given range from the Page File
 		pf_remove_env_page(e,virtual_address);
@@ -788,19 +786,16 @@ void freeMem(struct Env* e, uint32 virtual_address, uint32 size)
 			}
 			if (empty==1)
 			{
-				/*uint32 physicalAdd = e->env_page_directory[PDX(virtual_address)]>>12<<12;
 				e->env_page_directory[PDX(virtual_address)] = 0;
-				struct Frame_Info *Frame = to_frame_info(physicalAdd);
-				free_frame(Frame);*/
 				//remember that the page table was created using kmalloc so it should be removed using kfree()
-				kfree((void*)virtual_address);
+				kfree((void*)ptr_page_table);
+
 			}
 		}
 
 		virtual_address+=PAGE_SIZE;
 		if(virtual_address == USER_HEAP_MAX)
 			virtual_address = USER_HEAP_START;
-		size--;
 	}
 
 
