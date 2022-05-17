@@ -25,6 +25,7 @@ struct Env_Queue env_exit_queue;	// queue of all exited envs
 struct Env_Queue *env_ready_queues;	// Ready queue(s) for the MLFQ or RR
 uint8 *quantums ;					// Quantum(s) in ms for each level of the ready queue(s)
 uint8 num_of_ready_queues ;			// Number of ready queue(s)
+uint8 chosenqueue;
 //===============
 
 //2015

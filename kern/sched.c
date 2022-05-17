@@ -100,62 +100,55 @@ void sched_init_MLFQ(uint8 numOfLevels, uint8 *quantumOfEachLevel)
 	//[1] Create the ready queues and initialize them using init_queue()
 	 num_of_ready_queues=numOfLevels;
 	 struct Env_Queue *e;
-	// cprintf("Number of levels is %d \n",num_of_ready_queues);
+	 cprintf("Number of levels is %d \n",num_of_ready_queues);
 	 env_ready_queues =kmalloc(numOfLevels* sizeof(struct Env_Queue));
 	 for(int i=0;i<num_of_ready_queues;i++){
 
 		 init_queue(&env_ready_queues[i]);
-		// cprintf("%d \n",env_ready_queues[i]);
+		 cprintf("%d \n",env_ready_queues[i]);
 
-		// cprintf("queue is initialized %d\n",i);
+		 cprintf("queue is initialized %d\n",i);
 	 }
-	// cprintf("queue is initialized successfully\n");
+	 cprintf("queue is initialized successfully\n");
 
 	//[2] Create the "quantums" array and initialize it by the given quantums in "quantumOfEachLevel[]"
 	 quantums=kmalloc(numOfLevels* sizeof(uint8));
 	 for(int i=0;i<numOfLevels;i++){
 		 quantums[i]=quantumOfEachLevel[i];
-		   //cprintf("quantums each is %d \n",quantums[i]);
+		   cprintf("quantums each is %d \n",quantums[i]);
 	   }
 	//[3] Set the CPU quantum by the first level one
 	   kclock_set_quantum (quantums[0]);
-	  // cprintf("clock now is %d\n",quantums[0]);
+	   cprintf("clock now is %d\n",quantums[0]);
 }
-int chosenqueue;
+
 struct Env* fos_scheduler_MLFQ()
-{
+{   int envfound=0;
+    struct Env* NextEnv=NULL;
 	if (curenv != NULL)
-	{
-		if(chosenqueue<num_of_ready_queues){
-			enqueue(&(env_ready_queues[chosenqueue]), curenv);
-			chosenqueue += 1;
+	{   if(chosenqueue<num_of_ready_queues)
+		{	enqueue(&(env_ready_queues[chosenqueue]), curenv);
+			chosenqueue = chosenqueue+1;
 		}
 		else
-	   {
-		enqueue(&(env_ready_queues[chosenqueue-1]), curenv);
+	    {
+		 enqueue(&(env_ready_queues[num_of_ready_queues-1]), curenv);
 	   }
-
 	}
-
-	int found=0;
 	for(int i=0;i<num_of_ready_queues;i++){
-
-		if(queue_size(&(env_ready_queues[i])) > 0){
-			found=1;
+		int size = queue_size(&(env_ready_queues[i]));
+		if(size>0){
+			envfound=1;
 			chosenqueue=i+1;
 			break;
 	    }
 	}
-	struct Env* next_env=NULL;
-    if(found==1){
-    	kclock_set_quantum(quantums[chosenqueue - 1]);
-    	next_env=dequeue(&env_ready_queues[chosenqueue-1]);
+    if(envfound==1){
+    	kclock_set_quantum(quantums[chosenqueue-1]);
+    	NextEnv=dequeue(&env_ready_queues[chosenqueue-1]);
     }
-
-    return next_env;
+    return NextEnv;
 }
-
-
 //==================================================================================//
 //==================================================================================//
 //==================================================================================//
@@ -197,7 +190,6 @@ void fos_scheduler(void)
 	{
 		next_env = fos_scheduler_MLFQ();
 	}
-
 
 	//temporarily set the curenv by the next env JUST for checking the scheduler
 	//Then: reset it again
