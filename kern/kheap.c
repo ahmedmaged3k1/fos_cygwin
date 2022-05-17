@@ -161,7 +161,7 @@ void copyKheapIntoStruct()
 		address+=PAGE_SIZE;
 
 	}
-	cprintf("Finished Initializing , Number Done is : %d \n",index);
+	//cprintf("Finished Initializing , Number Done is : %d \n",index);
 }
 
 

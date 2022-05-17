@@ -572,7 +572,7 @@ void placementPageFault(struct Env * curenv, uint32 fault_va)
 		     }
 		     else
 		     {
-		    	 cprintf("Page is not read \n");
+		    	 //cprintf("Page is not read \n");
 		    	 int checkingOption = 0 ;
 		    	 if(fault_va>=USTACKBOTTOM&&fault_va<USTACKTOP)
 		    	 {
