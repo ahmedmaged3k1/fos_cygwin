@@ -458,8 +458,8 @@ void page_fault_handler(struct Env * curenv, uint32 fault_va)
 	{
 		replacementPageFault(curenv,fault_va);
 	}
-	cprintf("The Fault Address is %x\n",fault_va);
-	env_page_ws_print(curenv);
+	//cprintf("The Fault Address is %x\n",fault_va);
+	//env_page_ws_print(curenv);
 
 
 }
