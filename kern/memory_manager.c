@@ -767,11 +767,12 @@ void freeMem(struct Env* e, uint32 virtual_address, uint32 size)
 		{
 			if(e->ptr_pageWorkingSet[i].virtual_address == virtual_address)
 			{
+				unmap_frame(e->env_page_directory,(void*)virtual_address);
 				env_page_ws_clear_entry(e,i);
 			}
 		}
 		//3. Removes ONLY the empty page tables (i.e. not used) (no pages are mapped in the table)
-		unmap_frame(e->env_page_directory,(void*)virtual_address);
+
 		uint32* ptr_page_table;
 		get_page_table(e->env_page_directory,(uint32*)virtual_address,&ptr_page_table);
 		if(ptr_page_table!=NULL)
