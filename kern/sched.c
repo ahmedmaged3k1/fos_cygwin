@@ -100,22 +100,22 @@ void sched_init_MLFQ(uint8 numOfLevels, uint8 *quantumOfEachLevel)
 	//[1] Create the ready queues and initialize them using init_queue()
 	 num_of_ready_queues=numOfLevels;
 	 struct Env_Queue *e;
-	 cprintf("Number of levels is %d \n",num_of_ready_queues);
+	// cprintf("Number of levels is %d \n",num_of_ready_queues);
 	 env_ready_queues =kmalloc(numOfLevels* sizeof(struct Env_Queue));
 	 for(int i=0;i<num_of_ready_queues;i++){
 
 		 init_queue(&env_ready_queues[i]);
-		 cprintf("%d \n",env_ready_queues[i]);
+		// cprintf("%d \n",env_ready_queues[i]);
 
-		 cprintf("queue is initialized %d\n",i);
+		// cprintf("queue is initialized %d\n",i);
 	 }
-	 cprintf("queue is initialized successfully\n");
+	// cprintf("queue is initialized successfully\n");
 
 	//[2] Create the "quantums" array and initialize it by the given quantums in "quantumOfEachLevel[]"
 	 quantums=kmalloc(numOfLevels* sizeof(uint8));
 	 for(int i=0;i<numOfLevels;i++){
 		 quantums[i]=quantumOfEachLevel[i];
-		   cprintf("quantums each is %d \n",quantums[i]);
+		  // cprintf("quantums each is %d \n",quantums[i]);
 	   }
 	//[3] Set the CPU quantum by the first level one
 	   kclock_set_quantum (quantums[0]);
