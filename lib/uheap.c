@@ -100,21 +100,7 @@ void nextFitAllocation(uint32 startingAddress , int pagesRequired )
 int firstmalloc=1;
 void* malloc(uint32 size)
 {
-	// Steps:
-	//	1) Implement NEXT FIT strategy to search the heap for suitable space
-	//		to the required allocation size (space should be on 4 KB BOUNDARY)
-	//	2) if no suitable space found, return NULL
-	//	 Else,
-	//	3) Call sys_allocateMem to invoke the Kernel for allocation
-	// 	4) Return pointer containing the virtual address of allocated space,
-	//
 
-	//This function should find the space of the required range
-	// ******** ON 4KB BOUNDARY ******************* //
-
-	//Use sys_isUHeapPlacementStrategyNEXTFIT() and
-	//sys_isUHeapPlacementStrategyBESTFIT() for the bonus
-	//to check the current strategy
 	 if(sys_isUHeapPlacementStrategyNEXTFIT())
 	 {
 		 if(firstmalloc==1)
@@ -186,7 +172,7 @@ void free(void* virtual_address)
 			break;
 	}
 	int size = userHeapArray[index].size;
-	sys_freeMem((uint32)virtual_address,size*PAGE_SIZE);
+	sys_freeMem((uint32)virtual_address,size);
 	for(int i = 0;i<size;i++)
 	{
 				userHeapArray[index].status=0;
