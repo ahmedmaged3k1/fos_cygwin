@@ -402,11 +402,6 @@ void fault_handler(struct Trapframe *tf)
 	{
 		// we have normal page fault =============================================================
 		faulted_env->pageFaultsCounter ++ ;
-
-//				cprintf("[%08s] user PAGE fault va %08x\n", curenv->prog_name, fault_va);
-//				cprintf("\nPage working set BEFORE fault handler...\n");
-//				env_page_ws_print(curenv);
-
 		if(isBufferingEnabled())
 		{
 			__page_fault_handler_with_buffering(faulted_env, fault_va);
