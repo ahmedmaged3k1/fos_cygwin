@@ -973,6 +973,7 @@ inline void env_page_ws_clear_entry(struct Env* e, uint32 entry_index)
 inline uint32 env_page_ws_get_virtual_address(struct Env* e, uint32 entry_index)
 {
 	assert(entry_index >= 0 && entry_index < (e->page_WS_max_size));
+
 	return ROUNDDOWN(e->ptr_pageWorkingSet[entry_index].virtual_address,PAGE_SIZE);
 }
 

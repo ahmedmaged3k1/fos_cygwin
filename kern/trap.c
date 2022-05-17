@@ -452,45 +452,102 @@ void page_fault_handler(struct Env * curenv, uint32 fault_va)
 
 	if(env_page_ws_get_size(curenv)<curenv->page_WS_max_size)
 	{
-		cprintf("Placement\n");
 		placementPageFault(curenv,fault_va);
 	}
 	else
 	{
-
+		replacementPageFault(curenv,fault_va);
 	}
+	cprintf("The Fault Address is %x\n",fault_va);
+	env_page_ws_print(curenv);
+
 
 }
 void replacementPageFault(struct Env * curenv, uint32 fault_va)
 {
-	 if (isPageReplacmentAlgorithmModifiedCLOCK())
-		{
 		 int victimLoopCondition=-1;
 		 uint32 va ;
+		 int index =  curenv->page_last_WS_index;
 		 while(victimLoopCondition==-1)
 		 {
-
 			 for(int i=0;i<curenv->page_WS_max_size;i++)
 			 {
-				 va=env_page_ws_get_virtual_address(curenv,i);
+				 va=env_page_ws_get_virtual_address(curenv,index);
 				 uint32 workingSetEntryPermissions = pt_get_page_permissions(curenv, va);
 				 int permModified = workingSetEntryPermissions & PERM_MODIFIED;
 				 int prermUsed = workingSetEntryPermissions & PERM_USED;
 				 if(permModified==0&&prermUsed==0)
 				 {
-					 curenv->page_last_WS_index=i;
+					 curenv->page_last_WS_index=index;
+					 victimLoopCondition=1;
+					 break;
 
+				 }
+				 index++;
+				 if(index==curenv->page_WS_max_size)
+				 {
+				 	 index=0;
 				 }
 
 
-				 if(curenv->page_last_WS_index==curenv->page_WS_max_size)
-				  {
-				 	 curenv->page_last_WS_index=0;
-				  }
+
+			 }
+			 if(victimLoopCondition==1)
+			 {
+				 break;
 			 }
 
+			 for(int i=0;i<curenv->page_WS_max_size;i++)
+			 {
+				 va=env_page_ws_get_virtual_address(curenv,index);
+				 uint32 workingSetEntryPermissions = pt_get_page_permissions(curenv, va);
+				 int prermUsed = workingSetEntryPermissions & PERM_USED;
+				if(prermUsed==0)
+				{
+					 curenv->page_last_WS_index=index;
+					 victimLoopCondition=1;
+
+					 break;
+
+				 }
+				else{
+
+					//cprintf("Va is : %x\n",va);
+					pt_set_page_permissions(curenv, va, 0, PERM_USED);
+
+				}
+				index++;
+				if(index==curenv->page_WS_max_size)
+				{
+				  index=0;
+				}
+			 }
+
+			 if(victimLoopCondition==1)
+			  {
+
+			 				 break;
+			  }
+
 		   }
-		}
+
+		 va=env_page_ws_get_virtual_address(curenv,curenv->page_last_WS_index);
+		 uint32 workingSetEntryPermissions = pt_get_page_permissions(curenv, va);
+		 int permModified = workingSetEntryPermissions & PERM_MODIFIED;
+		 int prermUsed = workingSetEntryPermissions & PERM_USED;
+		 if(permModified!=0)
+		 {
+			 uint32 *pageTable ;
+			 struct Frame_Info *frame_info = get_frame_info(curenv->env_page_directory,(void * )va,&pageTable);
+			 pf_update_env_page(curenv,(void *)va,frame_info);
+
+		 }
+
+		 unmap_frame(curenv->env_page_directory, (void *)va);
+		 env_page_ws_clear_entry(curenv, curenv->page_last_WS_index);
+		// cprintf("victim index is : %d\n",curenv->page_last_WS_index);
+		 placementPageFault(curenv,fault_va);
+
 }
 void placementPageFault(struct Env * curenv, uint32 fault_va)
 {
@@ -498,20 +555,20 @@ void placementPageFault(struct Env * curenv, uint32 fault_va)
 		     int res= allocate_frame(&ptr_frame_info);
 		     if(res==E_NO_MEM)
 		     {
-		    	 cprintf("No Memory\n");
+		    	 //cprintf("No Memory\n");
 		    	 return;
 		     }
 
 		     res =map_frame(curenv->env_page_directory,ptr_frame_info,(void*)fault_va,PERM_USER|PERM_WRITEABLE|PERM_PRESENT);
 		     if(res==E_NO_MEM)
 		     {
-		    	 cprintf("No Memory\n");
+		    	// cprintf("No Memory\n");
 		    	  return;
 		     }
 		     int placementAllocated = pf_read_env_page(curenv,(void*)fault_va);
 		     if(placementAllocated==0)
 		     {
-		    	cprintf("Page is read Successfully\n");
+		    	//cprintf("Page is read Successfully\n");
 		     }
 		     else
 		     {
