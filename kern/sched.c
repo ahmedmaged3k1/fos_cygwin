@@ -122,26 +122,37 @@ void sched_init_MLFQ(uint8 numOfLevels, uint8 *quantumOfEachLevel)
 	   cprintf("clock now is %d\n",quantums[0]);
 }
 int chosenqueue;
-struct Env* next_env;
-bool found=0;
 struct Env* fos_scheduler_MLFQ()
 {
 	if (curenv != NULL)
 	{
-	 enqueue(&(env_ready_queues[chosenqueue+1]), curenv);
+		if(chosenqueue<num_of_ready_queues){
+			enqueue(&(env_ready_queues[chosenqueue]), curenv);
+			chosenqueue += 1;
+		}
+		else
+	   {
+		enqueue(&(env_ready_queues[chosenqueue-1]), curenv);
+	   }
+
 	}
+
+	int found=0;
 	for(int i=0;i<num_of_ready_queues;i++){
-		next_env=dequeue(&env_ready_queues[i]);
-		if(next_env!=NULL){
+
+		if(queue_size(&(env_ready_queues[i])) > 0){
 			found=1;
-			kclock_set_quantum(quantums[i]);
-			env_run(next_env);
-			chosenqueue=i;
+			chosenqueue=i+1;
+			break;
 	    }
 	}
-    if(found==1){return next_env;}
-    else{return NULL;}
+	struct Env* next_env=NULL;
+    if(found==1){
+    	kclock_set_quantum(quantums[chosenqueue - 1]);
+    	next_env=dequeue(&env_ready_queues[chosenqueue-1]);
+    }
 
+    return next_env;
 }
 
 

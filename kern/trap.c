@@ -449,15 +449,96 @@ void table_fault_handler(struct Env * curenv, uint32 fault_va)
 
 void page_fault_handler(struct Env * curenv, uint32 fault_va)
 {
-	//TODO: [PROJECT 2022 - [6] PAGE FAULT HANDLER]
-	// Write your code here, remove the panic and write your code
-	panic("page_fault_handler() is not implemented yet...!!");
 
-	//refer to the project presentation and documentation for details
+	if(env_page_ws_get_size(curenv)<curenv->page_WS_max_size)
+	{
+		cprintf("Placement\n");
+		placementPageFault(curenv,fault_va);
+	}
+	else
+	{
+
+	}
+
+}
+void replacementPageFault(struct Env * curenv, uint32 fault_va)
+{
+	 if (isPageReplacmentAlgorithmModifiedCLOCK())
+		{
+		 int victimLoopCondition=-1;
+		 uint32 va ;
+		 while(victimLoopCondition==-1)
+		 {
+
+			 for(int i=0;i<curenv->page_WS_max_size;i++)
+			 {
+				 va=env_page_ws_get_virtual_address(curenv,i);
+				 uint32 workingSetEntryPermissions = pt_get_page_permissions(curenv, va);
+				 int permModified = workingSetEntryPermissions & PERM_MODIFIED;
+				 int prermUsed = workingSetEntryPermissions & PERM_USED;
+				 if(permModified==0&&prermUsed==0)
+				 {
+					 curenv->page_last_WS_index=i;
+
+				 }
 
 
-	//TODO: [PROJECT 2022 - BONUS4] Change WS Size according to Program Priority‌
+				 if(curenv->page_last_WS_index==curenv->page_WS_max_size)
+				  {
+				 	 curenv->page_last_WS_index=0;
+				  }
+			 }
 
+		   }
+		}
+}
+void placementPageFault(struct Env * curenv, uint32 fault_va)
+{
+	 struct Frame_Info *ptr_frame_info;
+		     int res= allocate_frame(&ptr_frame_info);
+		     if(res==E_NO_MEM)
+		     {
+		    	 cprintf("No Memory\n");
+		    	 return;
+		     }
+
+		     res =map_frame(curenv->env_page_directory,ptr_frame_info,(void*)fault_va,PERM_USER|PERM_WRITEABLE|PERM_PRESENT);
+		     if(res==E_NO_MEM)
+		     {
+		    	 cprintf("No Memory\n");
+		    	  return;
+		     }
+		     int placementAllocated = pf_read_env_page(curenv,(void*)fault_va);
+		     if(placementAllocated==0)
+		     {
+		    	cprintf("Page is read Successfully\n");
+		     }
+		     else
+		     {
+		    	 cprintf("Page is not read \n");
+		    	 int checkingOption = 0 ;
+		    	 if(fault_va>=USTACKBOTTOM&&fault_va<USTACKTOP)
+		    	 {
+		    		 if(checkingOption==23)return;
+		    	     int AddResult = pf_add_empty_env_page(curenv,fault_va,0);
+		    	     checkingOption=-1 ;
+
+		    	     if(AddResult == 0)
+		    	        {
+		    	    		 	checkingOption=250;
+		    	    	}
+
+		    	 }
+		    	 else{
+		    	 		panic("No virtual space available on this page file");
+		    	  }
+		     }
+		     env_page_ws_set_entry(curenv,curenv->page_last_WS_index,fault_va);
+		     curenv->page_last_WS_index++;
+		     if(curenv->page_last_WS_index==curenv->page_WS_max_size)
+		     {
+		    	 curenv->page_last_WS_index=0;
+		     }
 
 }
 

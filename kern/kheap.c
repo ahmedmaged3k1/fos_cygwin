@@ -8,7 +8,6 @@ int numberOfIndicies=0;
 int kernelHeapSize = ((KERNEL_HEAP_MAX-KERNEL_HEAP_START)/PAGE_SIZE);
 uint32 lastUsedAddress =KERNEL_HEAP_START;
 uint32 firstFreeAddress =KERNEL_HEAP_START;
-
 int kernelHeapIndex = 0;
  struct KernelHeapData
  {
@@ -20,7 +19,7 @@ int kernelHeapIndex = 0;
  	int frameNumbers;
  	struct Frame_Info* frame_info;
  };
- struct KernelHeapData KernelHeapDataArray[((KERNEL_HEAP_MAX-KERNEL_HEAP_START)/PAGE_SIZE)];
+struct KernelHeapData KernelHeapDataArray[((KERNEL_HEAP_MAX-KERNEL_HEAP_START)/PAGE_SIZE)];
 void* kmalloc(unsigned int size)
 {
 	 if(kHeapDataOption==0)
@@ -73,8 +72,6 @@ int freePlacesNextFit(int pagesRequired,uint32 startAddress)
 		 if(address==KERNEL_HEAP_MAX)
 		 	 			 {
 		 	 			 address=KERNEL_HEAP_START;
-
-
 		 	 			 }
 		 index =((address-KERNEL_HEAP_START)/PAGE_SIZE);
 		 for(int j=0;j<pagesRequired;j++)

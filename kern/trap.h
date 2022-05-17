@@ -42,5 +42,7 @@ uint32 isPageReplacmentAlgorithmModifiedCLOCK();
 
 void enableModifiedBuffer(uint32 enableIt);
 uint32 isModifiedBufferEnabled();
+void placementPageFault(struct Env * curenv, uint32 fault_va);
+void replacementPageFault(struct Env *curenv, uint32 fault_va);
 
 #endif /* FOS_KERN_TRAP_H */
