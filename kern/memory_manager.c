@@ -728,14 +728,12 @@ int loadtime_map_frame(uint32 *ptr_page_directory, struct Frame_Info *ptr_frame_
 //======================================================
 /// functions used for malloc() and freeHeap()
 //======================================================
-
 void allocateMem(struct Env* e, uint32 virtual_address, uint32 size)
 {
 	//This function should allocate ALL pages of the required range in the PAGE FILE
 	//and allocate NOTHING in the main memory
 
-	size = ROUNDUP(size,PAGE_SIZE);
-	size = size/PAGE_SIZE;
+
 
 	for(;size>0;size--)
 	{
@@ -801,7 +799,6 @@ void freeMem(struct Env* e, uint32 virtual_address, uint32 size)
 
 
 }
-
 void __freeMem_with_buffering(struct Env* e, uint32 virtual_address, uint32 size)
 {
 	//[PROJECT 2015 - DynamicDeAlloc] freeMem() [Kernel Side]
