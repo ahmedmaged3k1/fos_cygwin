@@ -28,10 +28,10 @@ void* kmalloc(unsigned int size)
 		 kHeapDataOption=100 ;
 	 }
 	 if(lastUsedAddress==KERNEL_HEAP_MAX)
-	 	 			 {
-	 	 			 lastUsedAddress=KERNEL_HEAP_START;
+	  {
+	 	 lastUsedAddress=KERNEL_HEAP_START;
 
-	 	 			 }
+	  }
 	 if(KERNEL_HEAP_MAX-lastUsedAddress<size)return NULL;
   int frameNumbers ;
   size=ROUNDUP((uint32)size,PAGE_SIZE);
@@ -70,9 +70,9 @@ int freePlacesNextFit(int pagesRequired,uint32 startAddress)
 	 while(i<kernelHeapSize)
 	 {
 		 if(address==KERNEL_HEAP_MAX)
-		 	 			 {
-		 	 			 address=KERNEL_HEAP_START;
-		 	 			 }
+		  {
+		 	  address=KERNEL_HEAP_START;
+		  }
 		 index =((address-KERNEL_HEAP_START)/PAGE_SIZE);
 		 for(int j=0;j<pagesRequired;j++)
 		 {
@@ -91,15 +91,10 @@ int freePlacesNextFit(int pagesRequired,uint32 startAddress)
 
 			 if(accumlativeCounter==pagesRequired)
 				 {
-
 				 firstFreeAddress=address;
-				 lastUsedAddress=firstFreeAddress;
-
-
+				 lastUsedAddress=address;
 				 return 1 ;
 				 }
-
-
 			 else{
 
 				 address+=(PAGE_SIZE);
@@ -125,11 +120,9 @@ void nextFitAllocation(uint32 startingAddress , int pagesRequired )
 		 struct Frame_Info *ptr_frame_info;
 	     int res= allocate_frame(&ptr_frame_info);
 		 if(res==E_NO_MEM)
-			 {
-
-			 return ;
-
-			 }
+		 {
+		 return ;
+		 }
 	     res = map_frame(ptr_page_directory, ptr_frame_info, (void*)KernelHeapDataArray[index].virtualAddress,PERM_PRESENT|PERM_WRITEABLE);
 		 if(res==E_NO_MEM)
 					 {
