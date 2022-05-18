@@ -758,7 +758,6 @@ void freeMem(struct Env* e, uint32 virtual_address, uint32 size)
 
 	//cprintf("Size in SysFree Mem : %d\n",size);
 	//This function should:
-
 	for(;size>0;size--)
 	{
 		//1. Free ALL pages of the given range from the Page File

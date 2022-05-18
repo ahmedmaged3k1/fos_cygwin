@@ -23,7 +23,6 @@ struct userHeapData{
 	uint32 startAddress;
 	int status;
 	int size;
-	int frameNumbers ;
 };
 struct userHeapData userHeapArray[(USER_HEAP_MAX - USER_HEAP_START ) / PAGE_SIZE];
 void copyUheapIntoStruct()
@@ -34,7 +33,6 @@ void copyUheapIntoStruct()
 		userHeapArray[index].startAddress=address;
 		userHeapArray[index].status=0;
 		userHeapArray[index].size=0;
-		userHeapArray[index].frameNumbers=0;
 		index++;
 	}
 }
@@ -53,12 +51,10 @@ int freePlacesNextFit(uint32 pagesRequired,uint32 startAddress)
 		 for(int j=0;j<pagesRequired;j++)
 		 {
 			 if( index < userHeapSizeInPages && userHeapArray[index].status==0)
-			 {
 				 accumlativeCounter++;
-			 }
 			 else
 			 {
-
+				 accumlativeCounter=0;
 				 break ;
 			 }
 				index++;
@@ -71,11 +67,7 @@ int freePlacesNextFit(uint32 pagesRequired,uint32 startAddress)
 			return 1 ;
 		}
 		else
-		{
-			accumlativeCounter=0;
-		    address+=(PAGE_SIZE);
-		}
-
+			address+=(PAGE_SIZE);
 	 }
 
 	 return 0;
@@ -86,13 +78,16 @@ void nextFitAllocation(uint32 startingAddress , int pagesRequired )
 	 uint32 address =startingAddress;
 	 int index =((startingAddress-USER_HEAP_START)/PAGE_SIZE);
 	 int cntr = 0 ;
+	 userHeapArray[index].size=pagesRequired;
 	 for(int i=0;i<pagesRequired;i++)
 	 {
-		userHeapArray[index].status=1;
-		userHeapArray[index].frameNumbers=pagesRequired;
-		userHeapArray[index].size=(pagesRequired*PAGE_SIZE);
+		 userHeapArray[index].status=1;
+
 		lastUsedAddress+=PAGE_SIZE;
-		index++;
+		if(lastUsedAddress==USER_HEAP_MAX)
+			lastUsedAddress=USER_HEAP_START;
+
+		index=(index+1)%userHeapSizeInPages;
 		cntr++;
 	 }
 
@@ -111,30 +106,27 @@ void* malloc(uint32 size)
 		 if(firstmalloc==1)
 		 {
 			 copyUheapIntoStruct();
-			 firstmalloc=1458;
+			 firstmalloc=0;
 		 }
 		 if(lastUsedAddress==USER_HEAP_MAX)
 			 lastUsedAddress=USER_HEAP_START;
-		 if(USER_HEAP_MAX-lastUsedAddress<size)return NULL;
 		 int frameNumbers ;
 		 size=ROUNDUP((uint32)size,PAGE_SIZE);
-
 		 frameNumbers=size/PAGE_SIZE;
-		 if(size%PAGE_SIZE!=0)frameNumbers++;
 
 		 int freePlaces = freePlacesNextFit( frameNumbers, lastUsedAddress);
 		 if(freePlaces==1)
 			 nextFitAllocation(firstFreeAddress,frameNumbers);
 		 else
-			 return NULL;
+			 return 0;
 		 uint32 returnAddress = firstFreeAddress;
 		 sys_allocateMem(returnAddress,frameNumbers);
-		 return (void*)firstFreeAddress;
+		 return (void*)returnAddress;
 	 }
 
 
 
-	return NULL;
+	return 0;
 }
 
 void* smalloc(char *sharedVarName, uint32 size, uint8 isWritable)
@@ -164,16 +156,28 @@ void free(void* virtual_address)
 	virtual_address=(uint32*)ROUNDDOWN((uint32)virtual_address,PAGE_SIZE);
 	uint32 startAddress = (uint32)virtual_address;
 	int ctr =0 ;
-	int index=(((int32)startAddress-USER_HEAP_START)/PAGE_SIZE);
-	int addressindex=(((int32)startAddress-USER_HEAP_START)/PAGE_SIZE);
-	int size = userHeapArray[index].size;
-
-	sys_freeMem((uint32)virtual_address,size);
-	int frame = userHeapArray[index].frameNumbers;
-	for(int i = 0;i<frame;i++)
+	bool found = 0;
+	int j = 0;
+	int index=-1;
+	while(1)
 	{
-				userHeapArray[addressindex].status=0;
-				addressindex++;
+		if(userHeapArray[j].startAddress==startAddress)
+		{
+			index = j;
+			found=1;
+			break;
+		}
+		j++;
+		if(j==userHeapSizeInPages)
+			break;
+	}
+	int size = userHeapArray[index].size;
+	sys_freeMem((uint32)virtual_address,size);
+	for(int i = 0;i<size;i++)
+	{
+				userHeapArray[index].status=0;
+				userHeapArray[index].size=0;
+				index=(index+1)%userHeapSizeInPages;
 	}
 }
 
