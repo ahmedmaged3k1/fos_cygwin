@@ -719,33 +719,17 @@ void start_env_free(struct Env *e)
 }
 void env_free(struct Env *e)
 {
+	//TODO: [PROJECT 2022 - BONUS 2] Exit [env_free()]
+
+	//YOUR CODE STARTS HERE, remove the panic and write your code ----
+	panic("env_free() is not implemented yet...!!");
+
 	// [1] Free the pages in the PAGE working set from the main memory
-	uint32 workingSetSize = env_page_ws_get_size(e); //counts pages loading in main memory
-	for(uint32 entryIndex = 0 ; entryIndex < workingSetSize ; entryIndex++ ){
-	      uint32 virtual_address= env_page_ws_get_virtual_address(e, entryIndex);
-		  env_page_ws_clear_entry (e,entryIndex);
-		  unmap_frame(e->env_page_directory,(void*)virtual_address);
-		  pf_remove_env_page(e,virtual_address);
-	}
 	// [2] Free the PAGE working set array itself from the main memory
-	 kfree(e->ptr_pageWorkingSet);
 	// [3] Free all TABLES from the main memory
-	 int pageDirectoryMaxIndex = PDX(USER_TOP);
-	 int isEmpty = 0;
-	 for(int i = 0; i < pageDirectoryMaxIndex ; i++){
-	      if(e->env_page_directory[i] != isEmpty)
-	      {
-	       struct Frame_Info *frame_info_ptr;
-	       frame_info_ptr= to_frame_info(e->env_page_directory[i]);
-	       free_frame(frame_info_ptr);
-	       e->env_page_directory[i]=0;
-	      }
-	 }
 	// [4] Free the page DIRECTORY from the main memory
-     uint32 directoryphysicalAddress = e->env_cr3;
-     struct Frame_Info *frameInformation;
-     frameInformation = to_frame_info(directoryphysicalAddress);
-     free_frame(frameInformation);
+
+
 
 	//YOUR CODE ENDS HERE --------------------------------------------
 
@@ -753,6 +737,7 @@ void env_free(struct Env *e)
 	pf_free_env(e); /*(ALREADY DONE for you)*/ // (removes all of the program pages from the page file)
 	free_environment(e); /*(ALREADY DONE for you)*/ // (frees the environment (returns it back to the free environment list))
 }
+
 
 void __env_free_with_buffering(struct Env *e)
 {
