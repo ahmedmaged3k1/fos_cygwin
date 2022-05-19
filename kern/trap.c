@@ -447,7 +447,7 @@ void page_fault_handler(struct Env * curenv, uint32 fault_va)
 
 	if(env_page_ws_get_size(curenv)<curenv->page_WS_max_size)
 	{
-		placementPageFault(curenv,fault_va);
+		placementPageFault(curenv,fault_va,1);
 	}
 	else
 	{
@@ -541,10 +541,10 @@ void replacementPageFault(struct Env * curenv, uint32 fault_va)
 		 unmap_frame(curenv->env_page_directory, (void *)va);
 		 env_page_ws_clear_entry(curenv, curenv->page_last_WS_index);
 		// cprintf("victim index is : %d\n",curenv->page_last_WS_index);
-		 placementPageFault(curenv,fault_va);
+		 placementPageFault(curenv,fault_va,0);
 
 }
-void placementPageFault(struct Env * curenv, uint32 fault_va)
+void placementPageFault(struct Env * curenv, uint32 fault_va,int option)
 {
 	 struct Frame_Info *ptr_frame_info;
 		     int res= allocate_frame(&ptr_frame_info);
@@ -586,17 +586,21 @@ void placementPageFault(struct Env * curenv, uint32 fault_va)
 		    	  }
 		     }
 
-		     for (int i = 0; i <  curenv->page_WS_max_size; i++)
-		     {
-		         if (curenv->ptr_pageWorkingSet[curenv->page_last_WS_index].empty)
-		             break;
-		         else if (curenv->ptr_pageWorkingSet[i].empty)
-		         {
-		             curenv->page_last_WS_index = i;
-		             break;
-		         }
-		     }
+		    	     for (int i = 0; i <  curenv->page_WS_max_size; i++)
+		    			     {
+		    			         if (curenv->ptr_pageWorkingSet[curenv->page_last_WS_index].empty)
+		    			             break;
+		    			         else if (curenv->ptr_pageWorkingSet[i].empty)
+		    			         {
+		    			             curenv->page_last_WS_index = i;
+		    			             break;
+		    			         }
+		    			     }
+
+
+
 		     env_page_ws_set_entry(curenv,curenv->page_last_WS_index,fault_va);
+
 		     curenv->page_last_WS_index++;
 		     if(curenv->page_last_WS_index==curenv->page_WS_max_size)
 		     {

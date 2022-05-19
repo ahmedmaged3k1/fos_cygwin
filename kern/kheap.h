@@ -19,6 +19,7 @@ int freePlacesNextFit(int pagesRequired,uint32 startAddress);
 
 unsigned int kheap_virtual_address(unsigned int physical_address);
 unsigned int kheap_physical_address(unsigned int virtual_address);
+
 void nextFitAllocation(uint32 startingAddress , int pagesRequired );
 void copyKheapIntoStruct();
 

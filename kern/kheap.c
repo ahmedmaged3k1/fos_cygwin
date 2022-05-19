@@ -59,6 +59,7 @@ void* kmalloc(unsigned int size)
 
 
 }
+
 int freePlacesNextFit(int pagesRequired,uint32 startAddress)
  {
 	 int accumlativeCounter = 0;
