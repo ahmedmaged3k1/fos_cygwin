@@ -115,8 +115,6 @@ void _main(void)
 
 			int numOFEmptyLocInWS = CheckAndCountEmptyLocInWS(myEnv);
 			int CurrFreeFrames = sys_calculate_free_frames() + sys_calculate_modified_frames() - numOFEmptyLocInWS;
-			cprintf("The Difference between CurrentFree and Free Frames is %d - %d = %d\n",CurrFreeFrames,InitFreeFrames,(CurrFreeFrames-InitFreeFrames));
-			//CurrFreeFrames+=2;
 			assert(CurrFreeFrames - InitFreeFrames == 0) ;
 		}
 		else if (Iteration == 3 )
@@ -127,8 +125,6 @@ void _main(void)
 			int numOFEmptyLocInWS = CheckAndCountEmptyLocInWS(myEnv);
 			int CurrFreeFrames = sys_calculate_free_frames() + sys_calculate_modified_frames() - numOFEmptyLocInWS;
 			//cprintf("numOFEmptyLocInWS = %d\n", numOFEmptyLocInWS );
-			cprintf("The Diffrence is %d - %d = %d\n",CurrFreeFrames,InitFreeFrames,(CurrFreeFrames-InitFreeFrames));
-			//CurrFreeFrames++;
 			assert(CurrFreeFrames - InitFreeFrames == 0) ;
 		}
 		///========================================================================

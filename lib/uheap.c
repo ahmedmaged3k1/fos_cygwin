@@ -82,7 +82,7 @@ void nextFitAllocation(uint32 startingAddress , int pagesRequired )
 	 for(int i=0;i<pagesRequired;i++)
 	 {
 		 userHeapArray[index].status=1;
-		 userHeapArray[index].size=pagesRequired;
+
 		lastUsedAddress+=PAGE_SIZE;
 		if(lastUsedAddress==USER_HEAP_MAX)
 			lastUsedAddress=USER_HEAP_START;
@@ -159,7 +159,7 @@ void free(void* virtual_address)
 	bool found = 0;
 	int j = 0;
 	int index=-1;
-	/*while(1)
+	while(1)
 	{
 		if(userHeapArray[j].startAddress==startAddress)
 		{
@@ -170,26 +170,15 @@ void free(void* virtual_address)
 		j++;
 		if(j==userHeapSizeInPages)
 			break;
-	}*/
-	index=(((int32)startAddress-USER_HEAP_START)/PAGE_SIZE);
-
+	}
 	int size = userHeapArray[index].size;
-	int loopIndex = index;
-	if(userHeapArray[loopIndex].status==0)return;
+	sys_freeMem((uint32)virtual_address,size);
 	for(int i = 0;i<size;i++)
 	{
-
-				userHeapArray[loopIndex].status=0;
-				userHeapArray[loopIndex].size=0;
-				loopIndex++;
-				if(loopIndex==userHeapSizeInPages)
-				{
-					cprintf("Reached Max\n");
-				break;
-				}
-
+				userHeapArray[index].status=0;
+				userHeapArray[index].size=0;
+				index=(index+1)%userHeapSizeInPages;
 	}
-	sys_freeMem((uint32)virtual_address,size);
 }
 
 

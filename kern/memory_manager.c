@@ -752,7 +752,7 @@ void allocateMem(struct Env* e, uint32 virtual_address, uint32 size)
 
 
 // [12] freeMem
-int i = 0;
+
 void freeMem(struct Env* e, uint32 virtual_address, uint32 size)
 {
 
@@ -770,11 +770,9 @@ void freeMem(struct Env* e, uint32 virtual_address, uint32 size)
 
 				env_page_ws_clear_entry(e,i);
 				unmap_frame(e->env_page_directory,(void*)virtual_address);
-
 			}
 
 		}
-
 		//3. Removes ONLY the empty page tables (i.e. not used) (no pages are mapped in the table)
 
 		uint32* ptr_page_table;
@@ -789,10 +787,9 @@ void freeMem(struct Env* e, uint32 virtual_address, uint32 size)
 			}
 			if (empty==1)
 			{
-				pd_clear_page_dir_entry(e,virtual_address);
+				e->env_page_directory[PDX(virtual_address)] = 0;
 				//remember that the page table was created using kmalloc so it should be removed using kfree()
 				kfree((void*)ptr_page_table);
-
 
 			}
 		}
@@ -800,7 +797,6 @@ void freeMem(struct Env* e, uint32 virtual_address, uint32 size)
 		virtual_address+=PAGE_SIZE;
 		if(virtual_address == USER_HEAP_MAX)
 			virtual_address = USER_HEAP_START;
-
 	}
 
 

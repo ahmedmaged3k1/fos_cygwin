@@ -585,6 +585,17 @@ void placementPageFault(struct Env * curenv, uint32 fault_va)
 		    	 		panic("No virtual space available on this page file");
 		    	  }
 		     }
+
+		     for (int i = 0; i <  curenv->page_WS_max_size; i++)
+		     {
+		         if (curenv->ptr_pageWorkingSet[curenv->page_last_WS_index].empty)
+		             break;
+		         else if (curenv->ptr_pageWorkingSet[i].empty)
+		         {
+		             curenv->page_last_WS_index = i;
+		             break;
+		         }
+		     }
 		     env_page_ws_set_entry(curenv,curenv->page_last_WS_index,fault_va);
 		     curenv->page_last_WS_index++;
 		     if(curenv->page_last_WS_index==curenv->page_WS_max_size)
