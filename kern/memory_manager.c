@@ -732,76 +732,71 @@ void allocateMem(struct Env* e, uint32 virtual_address, uint32 size)
 {
 	//This function should allocate ALL pages of the required range in the PAGE FILE
 	//and allocate NOTHING in the main memory
-
-
-
 	for(;size>0;size--)
 	{
 		int pageFile = pf_add_empty_env_page(curenv,virtual_address,1);
 		if(pageFile == E_NO_PAGE_FILE_SPACE)
 			panic("ERROR in allocateMem, no enough memory.");
 		else
-		{
 			virtual_address += PAGE_SIZE;
-			if(virtual_address == USER_HEAP_MAX)
-				virtual_address = USER_HEAP_START;
-		}
 	}
 }
 
 
 
 // [12] freeMem
-
+bool emptyPageTable(uint32* ptr_table)
+{
+	bool empty = 1;
+	for(int j = 0 ; j < 1024 ; j++)
+	{
+		if(ptr_table[j]!=0)
+			empty=0;
+	}
+	return empty;
+}
+void searchAndRemoveFromWorkingSet(uint32 va,struct Env*e)
+{
+	for(int i = 0 ; i <e->page_WS_max_size ;i++)
+	{
+		if(e->ptr_pageWorkingSet[i].virtual_address == va)
+		{
+			uint32 workingSetVA=env_page_ws_get_virtual_address(e,i);
+			env_page_ws_clear_entry(e,i);
+			unmap_frame(e->env_page_directory,(void*)workingSetVA);
+		}
+	}
+}
 void freeMem(struct Env* e, uint32 virtual_address, uint32 size)
 {
-
-	//cprintf("Size in SysFree Mem : %d\n",size);
 	//This function should:
 	for(;size>0;size--)
 	{
 		//1. Free ALL pages of the given range from the Page File
 		pf_remove_env_page(e,virtual_address);
 		//2. Free ONLY pages that are resident in the working set from the memory
-		for(int i = 0 ; i <e->page_WS_max_size ;i++)
-		{
-			if(e->ptr_pageWorkingSet[i].virtual_address == virtual_address)
-			{
-
-				env_page_ws_clear_entry(e,i);
-				unmap_frame(e->env_page_directory,(void*)virtual_address);
-			}
-
-		}
+		searchAndRemoveFromWorkingSet(virtual_address,e);
 		//3. Removes ONLY the empty page tables (i.e. not used) (no pages are mapped in the table)
-
 		uint32* ptr_page_table;
 		get_page_table(e->env_page_directory,(uint32*)virtual_address,&ptr_page_table);
 		if(ptr_page_table!=NULL)
 		{
-			bool empty=1;
-			for(int j = 0 ; j < 1024 ; j++)
+			if (emptyPageTable(ptr_page_table)==1)
 			{
-				if(ptr_page_table[j]!=0)
-					empty=0;
-			}
-			if (empty==1)
-			{
-				e->env_page_directory[PDX(virtual_address)] = 0;
 				//remember that the page table was created using kmalloc so it should be removed using kfree()
 				kfree((void*)ptr_page_table);
+				e->env_page_directory[PDX(virtual_address)] = 0;
 
 			}
 		}
-
 		virtual_address+=PAGE_SIZE;
-		if(virtual_address == USER_HEAP_MAX)
-			virtual_address = USER_HEAP_START;
 	}
 
 
 
 }
+
+
 void __freeMem_with_buffering(struct Env* e, uint32 virtual_address, uint32 size)
 {
 	//[PROJECT 2015 - DynamicDeAlloc] freeMem() [Kernel Side]

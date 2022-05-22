@@ -58,6 +58,8 @@ uint32 isKHeapPlacementStrategyWORSTFIT();
 //Functions
 uint32 calculate_free_frames();
 //***********************************
+void searchAndRemoveFromWorkingSet(uint32 va,struct Env*e);
+bool emptyPageTable(uint32* ptr_table);
 
 struct freeFramesCounters
 {

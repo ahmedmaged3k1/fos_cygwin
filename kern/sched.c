@@ -119,7 +119,7 @@ void sched_init_MLFQ(uint8 numOfLevels, uint8 *quantumOfEachLevel)
 	   }
 	//[3] Set the CPU quantum by the first level one
 	   kclock_set_quantum (quantums[0]);
-	   cprintf("clock now is %d\n",quantums[0]);
+	 //  cprintf("clock now is %d\n",quantums[0]);
 }
 
 struct Env* fos_scheduler_MLFQ()

@@ -15,14 +15,19 @@
 
 void* kmalloc(unsigned int size);
 void kfree(void* virtual_address);
-int freePlacesNextFit(int pagesRequired,uint32 startAddress);
-
+void initialization(int index,int size ,uint32 address);
+void display();
+void unintialization(int index );
+void nextFitAllocation(uint32 startingAddress , int pagesRequired );
+void* nextFitHeapAllocation(uint32 startingAddress , int frameNumber,int size );
+void allocation(uint32 address,int frameNumber);
 unsigned int kheap_virtual_address(unsigned int physical_address);
 unsigned int kheap_physical_address(unsigned int virtual_address);
-
-void nextFitAllocation(uint32 startingAddress , int pagesRequired );
+unsigned int convert_physical_address(unsigned int virtual_address);
 void copyKheapIntoStruct();
-
+int freePlacesNextFit(int pagesRequired,uint32 startAddress);
+uint32 bestFitFreePlaces(int pagesRequired);
+void bestFitAllocation(uint32 startingAddress , int pagesRequired );
 int numOfKheapVACalls ;
 
 #endif // FOS_KERN_KHEAP_H_

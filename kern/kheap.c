@@ -16,6 +16,7 @@ int kernelHeapIndex = 0;
  	uint32 presentBit ;
  	int size ;
  	int status ;
+ 	uint32 blockStart;
  	int frameNumbers;
  	struct Frame_Info* frame_info;
  };
@@ -27,39 +28,49 @@ void* kmalloc(unsigned int size)
 		 copyKheapIntoStruct();
 		 kHeapDataOption=100 ;
 	 }
-	 if(lastUsedAddress==KERNEL_HEAP_MAX)
-	 	 			 {
-	 	 			 lastUsedAddress=KERNEL_HEAP_START;
+	 if(isKHeapPlacementStrategyNEXTFIT())
+	 {
+		 if(lastUsedAddress==KERNEL_HEAP_MAX)
+			 lastUsedAddress=KERNEL_HEAP_START;
 
-	 	 			 }
-	 if(KERNEL_HEAP_MAX-lastUsedAddress<size)return NULL;
-  int frameNumbers ;
-  size=ROUNDUP((uint32)size,PAGE_SIZE);
-  frameNumbers=size/PAGE_SIZE;
-  if(size%PAGE_SIZE!=0)frameNumbers++;
+		 if(KERNEL_HEAP_MAX-lastUsedAddress<size)return NULL;
 
-  int freePlaces = freePlacesNextFit( frameNumbers, lastUsedAddress);
+		 int frameNumbers ;
+		 size=ROUNDUP((uint32)size,PAGE_SIZE);
+		 frameNumbers=size/PAGE_SIZE;
+		 if(size%PAGE_SIZE!=0)frameNumbers++;
 
-  if(freePlaces==1)
-  {
-	   nextFitAllocation(firstFreeAddress,frameNumbers);
+		 int freePlaces = freePlacesNextFit( frameNumbers, lastUsedAddress);
 
-  }
-  else
-		   {
-	   return NULL;
-  }
+		 if(freePlaces==1)
+			 nextFitAllocation(firstFreeAddress,frameNumbers);
+		 else
+		   return NULL;
 
+	  	 uint32 returnAddress =(firstFreeAddress);
+	  	 return (void*)returnAddress;
 
-  			uint32 returnAddress =(firstFreeAddress);
+	 }
+	 else if (isKHeapPlacementStrategyBESTFIT())
+	 {
+		 int frameNumbers ;
+		 size=ROUNDUP((uint32)size,PAGE_SIZE);
+		 frameNumbers=size/PAGE_SIZE;
 
+		 uint32 allocationAddress = bestFitFreePlaces(frameNumbers);
+		 uint32 returnAddress=allocationAddress;
 
-  return (void*)returnAddress;
+		 if(allocationAddress!=0)
+			 bestFitAllocation(allocationAddress,frameNumbers);
+		 else
+		   return NULL;
 
+	  	 return (void*)returnAddress;
 
+	 }
 
+	 return NULL;
 }
-
 int freePlacesNextFit(int pagesRequired,uint32 startAddress)
  {
 	 int accumlativeCounter = 0;
@@ -73,6 +84,8 @@ int freePlacesNextFit(int pagesRequired,uint32 startAddress)
 		 if(address==KERNEL_HEAP_MAX)
 		 	 			 {
 		 	 			 address=KERNEL_HEAP_START;
+
+
 		 	 			 }
 		 index =((address-KERNEL_HEAP_START)/PAGE_SIZE);
 		 for(int j=0;j<pagesRequired;j++)
@@ -118,6 +131,7 @@ void nextFitAllocation(uint32 startingAddress , int pagesRequired )
 	 uint32 address =startingAddress;
 
 	 int index =((startingAddress-KERNEL_HEAP_START)/PAGE_SIZE);
+	 uint32 blockStart = startingAddress;
 	 int cntr = 0 ;
 
 	 for(int i=0;i<pagesRequired;i++)
@@ -141,6 +155,7 @@ void nextFitAllocation(uint32 startingAddress , int pagesRequired )
 					 KernelHeapDataArray[index].status=1;
 						 KernelHeapDataArray[index].frameNumbers=pagesRequired;
 						 KernelHeapDataArray[index].size=(pagesRequired*PAGE_SIZE);
+
 						 lastUsedAddress+=PAGE_SIZE;
 						 numberOfIndicies++;
 						 index++;
@@ -148,6 +163,81 @@ void nextFitAllocation(uint32 startingAddress , int pagesRequired )
 	 }
 
 }
+
+uint32 bestFitFreePlaces(int pagesRequired)
+{
+	uint32 address = KERNEL_HEAP_START;
+	int index =((address-KERNEL_HEAP_START)/PAGE_SIZE);
+	int testCounter = 0;
+	int bestFitSize =kernelHeapSize;
+	uint32 bestFitStartAddress=0;
+	uint32 startAddress=0;
+	int found=0;
+	int ctr = 0;
+	while(index<kernelHeapSize)
+	{
+
+			if(KernelHeapDataArray[index].status==0)
+			{
+				if(testCounter==0)
+				startAddress=KernelHeapDataArray[index].virtualAddress;
+				testCounter++;
+			}
+			else
+			{
+				if(testCounter<bestFitSize && (testCounter >= pagesRequired ))
+				{
+						ctr++;
+						found=1;
+						bestFitSize = testCounter ;
+						bestFitStartAddress = startAddress;
+				}
+				testCounter=0;
+			}
+
+			index++;
+	}
+	if(bestFitStartAddress == 0 && testCounter >= pagesRequired)
+	{
+		bestFitStartAddress = startAddress;
+	}
+	if(bestFitStartAddress ==0)
+		return 0;
+
+	return bestFitStartAddress;
+}
+void bestFitAllocation(uint32 startingAddress , int pagesRequired )
+{
+	 uint32 address =startingAddress;
+	 int index =((startingAddress-KERNEL_HEAP_START)/PAGE_SIZE);
+	 int cntr = 0 ;
+
+	 for(int i=0;i<pagesRequired;i++)
+	 {
+
+		 struct Frame_Info *ptr_frame_info;
+	     int res= allocate_frame(&ptr_frame_info);
+		 if(res==E_NO_MEM)
+			 return ;
+
+	     res = map_frame(ptr_page_directory, ptr_frame_info, (void*)KernelHeapDataArray[index].virtualAddress,PERM_PRESENT|PERM_WRITEABLE);
+		 if(res==E_NO_MEM)
+		 {
+			free_frame(ptr_frame_info);
+			return  ;
+	 	 }
+		 KernelHeapDataArray[index].status=1;
+		 KernelHeapDataArray[index].frameNumbers=pagesRequired;
+		 KernelHeapDataArray[index].blockStart=startingAddress;
+		 KernelHeapDataArray[index].size=(pagesRequired*PAGE_SIZE);
+		 index++;
+		 cntr++;
+	 }
+
+}
+
+
+
 
 void copyKheapIntoStruct()
 {
@@ -162,7 +252,7 @@ void copyKheapIntoStruct()
 		address+=PAGE_SIZE;
 
 	}
-	//cprintf("Finished Initializing , Number Done is : %d \n",index);
+	cprintf("Finished Initializing , Number Done is : %d \n",index);
 }
 
 
@@ -176,8 +266,6 @@ void kfree(void* virtual_address)
 	int addresIndex  = (((int32)startAddress-KERNEL_HEAP_START)/PAGE_SIZE);
 	for(int i = 0;i<KernelHeapDataArray[index].frameNumbers;i++)
 	{
-
-
 				unmap_frame(ptr_page_directory, (uint32 * )startAddress);
 				KernelHeapDataArray[addresIndex].status=0;
 				startAddress+=PAGE_SIZE;

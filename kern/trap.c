@@ -447,7 +447,7 @@ void page_fault_handler(struct Env * curenv, uint32 fault_va)
 
 	if(env_page_ws_get_size(curenv)<curenv->page_WS_max_size)
 	{
-		placementPageFault(curenv,fault_va,1);
+		placementPageFault(curenv,fault_va,0);
 	}
 	else
 	{
@@ -585,18 +585,28 @@ void placementPageFault(struct Env * curenv, uint32 fault_va,int option)
 		    	 		panic("No virtual space available on this page file");
 		    	  }
 		     }
+		     if(option==0)
+		     {
+		    	 int lastIndex ;
+		    	 lastIndex = curenv->page_last_WS_index;
+	    	     for (int i = 0; i <  curenv->page_WS_max_size; i++)
+	    			     {
+	    	    	 lastIndex--;
+	    			         if (curenv->ptr_pageWorkingSet[curenv->page_last_WS_index].empty)
+	    			             break;
+	    			         else if (curenv->ptr_pageWorkingSet[i].empty)
+	    			         {
+	    			        	 lastIndex++;
+	    			             curenv->page_last_WS_index = i;
+	    			             break;
+	    			         }
+	    			     }
 
-		    	     for (int i = 0; i <  curenv->page_WS_max_size; i++)
-		    			     {
-		    			         if (curenv->ptr_pageWorkingSet[curenv->page_last_WS_index].empty)
-		    			             break;
-		    			         else if (curenv->ptr_pageWorkingSet[i].empty)
-		    			         {
-		    			             curenv->page_last_WS_index = i;
-		    			             break;
-		    			         }
-		    			     }
-
+		     }
+		     else
+		     {
+		    	cprintf("The Placement Will have an erorr");
+		     }
 
 
 		     env_page_ws_set_entry(curenv,curenv->page_last_WS_index,fault_va);
@@ -608,6 +618,7 @@ void placementPageFault(struct Env * curenv, uint32 fault_va,int option)
 		     }
 
 }
+
 
 void __page_fault_handler_with_buffering(struct Env * curenv, uint32 fault_va)
 {
