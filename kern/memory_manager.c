@@ -535,14 +535,14 @@ int get_page_table(uint32 *ptr_page_directory, const void *virtual_address, uint
 void * create_page_table(uint32 *ptr_page_directory, const uint32 virtual_address)
 {
 	uint32 DirFrame =ptr_page_directory[PDX(virtual_address)];
-
 	uint32* ptr_page_table =kmalloc(PAGE_SIZE);
 	uint32 frame=0;
 	uint32 perm = PERM_USER|PERM_PRESENT| PERM_WRITEABLE;
-
-	for(int i=0;i<1024;i++)
+	int indexes ;
+	indexes=0;
+	for(;indexes<1024;indexes++)
 	{
-	 ptr_page_table[i]=0;
+	 ptr_page_table[indexes]=0;
 	}
 
 		uint32* pa_pagetable=(uint32*)kheap_physical_address((uint32)ptr_page_table);
@@ -769,14 +769,12 @@ void searchAndRemoveFromWorkingSet(uint32 va,struct Env*e)
 }
 void freeMem(struct Env* e, uint32 virtual_address, uint32 size)
 {
-	//This function should:
+	//cprintf("size : %d\n",size);
 	for(;size>0;size--)
 	{
-		//1. Free ALL pages of the given range from the Page File
 		pf_remove_env_page(e,virtual_address);
-		//2. Free ONLY pages that are resident in the working set from the memory
+
 		searchAndRemoveFromWorkingSet(virtual_address,e);
-		//3. Removes ONLY the empty page tables (i.e. not used) (no pages are mapped in the table)
 		uint32* ptr_page_table;
 		get_page_table(e->env_page_directory,(uint32*)virtual_address,&ptr_page_table);
 		if(ptr_page_table!=NULL)

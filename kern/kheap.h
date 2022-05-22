@@ -15,8 +15,9 @@
 
 void* kmalloc(unsigned int size);
 void kfree(void* virtual_address);
-void initialization(int index,int size ,uint32 address);
+void unMapingFrameFromStruct(int addressIndex , int status);
 void display();
+void initialization(int index,int pagesRequired , uint32 startingAddress,int status);
 void unintialization(int index );
 void nextFitAllocation(uint32 startingAddress , int pagesRequired );
 void* nextFitHeapAllocation(uint32 startingAddress , int frameNumber,int size );

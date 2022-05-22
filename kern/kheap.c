@@ -21,6 +21,18 @@ int kernelHeapIndex = 0;
  	struct Frame_Info* frame_info;
  };
 struct KernelHeapData KernelHeapDataArray[((KERNEL_HEAP_MAX-KERNEL_HEAP_START)/PAGE_SIZE)];
+void initialization(int index,int pagesRequired , uint32 startingAddress,int status)
+{
+	KernelHeapDataArray[index].status=status;
+    KernelHeapDataArray[index].frameNumbers=pagesRequired;
+	KernelHeapDataArray[index].blockStart=startingAddress;
+	KernelHeapDataArray[index].size=(pagesRequired*PAGE_SIZE);
+}
+void unMapingFrameFromStruct(int addressIndex , int status)
+{
+	KernelHeapDataArray[addressIndex].status=status;
+}
+
 void* kmalloc(unsigned int size)
 {
 	 if(kHeapDataOption==0)
@@ -152,9 +164,10 @@ void nextFitAllocation(uint32 startingAddress , int pagesRequired )
 
 						  return  ;
 					 }
-					 KernelHeapDataArray[index].status=1;
-						 KernelHeapDataArray[index].frameNumbers=pagesRequired;
-						 KernelHeapDataArray[index].size=(pagesRequired*PAGE_SIZE);
+					// KernelHeapDataArray[index].status=1;
+						// KernelHeapDataArray[index].frameNumbers=pagesRequired;
+						// KernelHeapDataArray[index].size=(pagesRequired*PAGE_SIZE);
+						 initialization(index,pagesRequired,startingAddress,1);
 
 						 lastUsedAddress+=PAGE_SIZE;
 						 numberOfIndicies++;
@@ -168,7 +181,7 @@ uint32 bestFitFreePlaces(int pagesRequired)
 {
 	uint32 address = KERNEL_HEAP_START;
 	int index =((address-KERNEL_HEAP_START)/PAGE_SIZE);
-	int testCounter = 0;
+	int accumlativeCounter = 0;
 	int bestFitSize =kernelHeapSize;
 	uint32 bestFitStartAddress=0;
 	uint32 startAddress=0;
@@ -179,25 +192,25 @@ uint32 bestFitFreePlaces(int pagesRequired)
 
 			if(KernelHeapDataArray[index].status==0)
 			{
-				if(testCounter==0)
+				if(accumlativeCounter==0)
 				startAddress=KernelHeapDataArray[index].virtualAddress;
-				testCounter++;
+				accumlativeCounter++;
 			}
 			else
 			{
-				if(testCounter<bestFitSize && (testCounter >= pagesRequired ))
+				if(accumlativeCounter<bestFitSize && (accumlativeCounter >= pagesRequired ))
 				{
 						ctr++;
 						found=1;
-						bestFitSize = testCounter ;
+						bestFitSize = accumlativeCounter ;
 						bestFitStartAddress = startAddress;
 				}
-				testCounter=0;
+				accumlativeCounter=0;
 			}
 
 			index++;
 	}
-	if(bestFitStartAddress == 0 && testCounter >= pagesRequired)
+	if(bestFitStartAddress == 0 && accumlativeCounter >= pagesRequired)
 	{
 		bestFitStartAddress = startAddress;
 	}
@@ -226,10 +239,7 @@ void bestFitAllocation(uint32 startingAddress , int pagesRequired )
 			free_frame(ptr_frame_info);
 			return  ;
 	 	 }
-		 KernelHeapDataArray[index].status=1;
-		 KernelHeapDataArray[index].frameNumbers=pagesRequired;
-		 KernelHeapDataArray[index].blockStart=startingAddress;
-		 KernelHeapDataArray[index].size=(pagesRequired*PAGE_SIZE);
+		 initialization(index,pagesRequired,startingAddress,1);
 		 index++;
 		 cntr++;
 	 }
@@ -267,7 +277,8 @@ void kfree(void* virtual_address)
 	for(int i = 0;i<KernelHeapDataArray[index].frameNumbers;i++)
 	{
 				unmap_frame(ptr_page_directory, (uint32 * )startAddress);
-				KernelHeapDataArray[addresIndex].status=0;
+
+				unMapingFrameFromStruct(addresIndex,0);
 				startAddress+=PAGE_SIZE;
 				addresIndex++;
 				ctr++;
