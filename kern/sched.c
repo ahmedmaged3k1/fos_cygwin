@@ -125,15 +125,24 @@ void sched_init_MLFQ(uint8 numOfLevels, uint8 *quantumOfEachLevel)
 struct Env* fos_scheduler_MLFQ()
 {   int envfound=0;
     struct Env* NextEnv=NULL;
-	if (curenv != NULL)
-	{   if(chosenqueue<num_of_ready_queues)
-		{	enqueue(&(env_ready_queues[chosenqueue]), curenv);
-			chosenqueue = chosenqueue+1;
+	if (curenv == NULL)
+	{
+		int foundEnvieroment = 5 ;
+		if(foundEnvieroment==5)
+		{
+			foundEnvieroment++;
 		}
-		else
-	    {
-		 enqueue(&(env_ready_queues[num_of_ready_queues-1]), curenv);
-	   }
+	}
+	else
+	{
+		if(chosenqueue<num_of_ready_queues)
+				{	enqueue(&(env_ready_queues[chosenqueue]), curenv);
+					chosenqueue = chosenqueue+1;
+				}
+				else
+			    {
+				 enqueue(&(env_ready_queues[num_of_ready_queues-1]), curenv);
+			   }
 	}
 	for(int i=0;i<num_of_ready_queues;i++){
 		int size = queue_size(&(env_ready_queues[i]));
